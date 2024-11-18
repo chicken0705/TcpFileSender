@@ -11,21 +11,30 @@ TcpFileSender::TcpFileSender(QWidget *parent)
     clientStatusLabel = new QLabel(QStringLiteral("客戶端就緒"));
     startButton = new QPushButton(QStringLiteral("開始"));
     quitButton = new QPushButton(QStringLiteral("退出"));
-    openButton = new QPushButton(QStringLiteral("開檔?"));
+    openButton = new QPushButton(QStringLiteral("開檔"));
     startButton->setEnabled(false);
+    //can i Push?
     buttonBox = new QDialogButtonBox;
     buttonBox->addButton(startButton, QDialogButtonBox::ActionRole);
     buttonBox->addButton(openButton, QDialogButtonBox::ActionRole);
     buttonBox->addButton(quitButton, QDialogButtonBox::RejectRole);
 
+    ipLineEdit = new QLineEdit("127.0.0.1");
+    portLineEdit = new QLineEdit("16998");
+
+    QFormLayout *formLayout = new QFormLayout;
+    formLayout->addRow(QStringLiteral("IP地址:"), ipLineEdit);
+    formLayout->addRow(QStringLiteral("Port號碼:"), portLineEdit);
+
     QVBoxLayout *mainLayout = new QVBoxLayout;
+    mainLayout->addLayout(formLayout);
     mainLayout->addWidget(clientProgressBar);
     mainLayout->addWidget(clientStatusLabel);
     mainLayout->addStretch(1);
     mainLayout->addSpacing(10);
     mainLayout->addWidget(buttonBox);
     setLayout(mainLayout);
-    setWindowTitle(QStringLiteral("(版本控制Git管理)檔案傳送"));
+    setWindowTitle(QStringLiteral("檔案傳送"));
     connect(openButton,SIGNAL(clicked()), this, SLOT(openFile()));
     connect(startButton, SIGNAL(clicked()), this, SLOT(start()));
     connect(&tcpClient, SIGNAL(connected()), this, SLOT(startTransfer()));
@@ -33,6 +42,12 @@ TcpFileSender::TcpFileSender(QWidget *parent)
     connect(quitButton, SIGNAL(clicked()), this, SLOT(close()));
 
 }
+void TcpFileSender::setConnectionDetails(const QString &ip, quint16 port)
+{
+    this->ipAddress = ip;
+    this->port = port;
+}
+
 void TcpFileSender::openFile()
 {
     fileName = QFileDialog::getOpenFileName(this);
@@ -43,18 +58,20 @@ void TcpFileSender::start()
     startButton->setEnabled(false);
     bytesWritten = 0;
     clientStatusLabel->setText(QStringLiteral("連接中..."));
-    tcpClient.connectToHost(QHostAddress("127.0.0.1"), 16998);
+    QString ipAddress = ipLineEdit->text();
+    quint16 port = portLineEdit->text().toUShort();
+    tcpClient.connectToHost(QHostAddress(ipAddress), port);
 }
 void TcpFileSender::startTransfer()
 {
     localFile = new QFile(fileName);
     if (!localFile->open(QFile::ReadOnly))
-     {
+    {
         QMessageBox::warning(this,QStringLiteral("應用程式"),
-                              QStringLiteral("無法讀取 %1:\n%2.").arg(fileName)
-                              .arg(localFile->errorString()));
+                             QStringLiteral("無法讀取 %1:\n%2.").arg(fileName)
+                                 .arg(localFile->errorString()));
         return;
-     }
+    }
 
     totalBytes = localFile->size();
     QDataStream sendOut(&outBlock, QIODevice::WriteOnly);
@@ -93,6 +110,3 @@ TcpFileSender::~TcpFileSender()
 {
 
 }
-
-
-

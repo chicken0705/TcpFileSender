@@ -12,6 +12,7 @@ class TcpFileSender : public QDialog
 public:
     TcpFileSender(QWidget *parent = 0);
     ~TcpFileSender();
+    void setConnectionDetails(const QString &ip, quint16 port);
 public slots:
     void start();
     void startTransfer();
@@ -33,6 +34,10 @@ private:
     QString          fileName;
     QFile            *localFile;
     QByteArray       outBlock;
+    QString ipAddress;
+    quint16 port;
+    QLineEdit        *ipLineEdit;
+    QLineEdit        *portLineEdit;
 };
 
 #endif // TCPFILESENDER_H
